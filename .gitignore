@@ -1,0 +1,6 @@
+config/vault.conf
+.env
+*.log
+restored-*/
+*.swp
+__pycache__/

@@ -1,0 +1,60 @@
+# backup-vault configuration
+# Copy to /etc/backup-vault/vault.conf and fill in the values.
+# Every value can also be provided through the environment (same name).
+
+# ---- what to back up -------------------------------------------------------
+
+SOURCE_DIRS="/srv/data"                 # space-separated list of directories
+VAULT_DIR="/var/backup-vault"           # local vault (staging area for restore)
+STATE_DIR="/var/lib/backup-vault"       # heartbeat, canary baseline, drill stamp
+
+# ---- encryption ------------------------------------------------------------
+
+# Prefer a protected passphrase file (umask 077) over this variable.
+# BACKUP_PASSPHRASE_FILE="/etc/backup-vault/passphrase"
+# BACKUP_PASSPHRASE=""                  # fallback: env var
+ENCRYPT_ITERATIONS=300000               # PBKDF2 iterations
+COMPRESSION="gzip"                      # gzip | xz | none
+
+# ---- databases (MySQL / MariaDB) -------------------------------------------
+
+DB_ENABLED=true
+DB_HOST="127.0.0.1"
+DB_PORT="3306"
+DB_USER="backup"
+DB_PASSWORD=""
+DB_NAMES="appdb"                        # space-separated list of databases
+
+# ---- off-site copy -----------------------------------------------------------
+
+# REMOTE_TYPE=s3    -> rclone push to any S3-compatible object storage.
+#                      For a ransomware-proof vault enable S3 Object Lock
+#                      (COMPLIANCE mode) and set PRUNE_REMOTE=false.
+# REMOTE_TYPE=ssh   -> append-only SSH vault host running scripts/vault-ingest.sh
+# REMOTE_TYPE=dir   -> mounted NAS / USB disk (also used by the demo and tests)
+REMOTE_TYPE="dir"
+DIR_TARGET="/mnt/backup-nas"
+# RCLONE_TARGET="myremote:bucket-name"  # s3 driver
+# RCLONE_CONFIG="/etc/backup-vault/rclone.conf"
+# SSH_TARGET="backup@vault01.example.com"
+# SSH_PORT="22"
+PRUNE_REMOTE=true                       # false when the remote is immutable
+
+# ---- retention (grandfather-father-son) --------------------------------------
+
+RETENTION_DAILY=7
+RETENTION_WEEKLY=4
+RETENTION_MONTHLY=12
+
+# ---- ransomware canary tripwire ------------------------------------------------
+
+CANARY_DIR="/opt/canary"                # decoy business files live here
+CANARY_BASELINE="/var/lib/backup-vault/canary.sha256"
+
+# ---- monitoring -----------------------------------------------------------------
+
+# Heartbeat file is refreshed after every successful run; alert if it goes
+# stale (dead-man switch). Webhook receives JSON on failures and tripwires.
+HEARTBEAT_FILE="/var/lib/backup-vault/heartbeat"
+NOTIFY_WEBHOOK=""                       # e.g. https://hooks.slack.com/services/...
+RPO_HOURS=24                            # recovery point objective for the audit
