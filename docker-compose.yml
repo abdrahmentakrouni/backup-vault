@@ -20,7 +20,8 @@ services:
       retries: 20
 
   minio:
-    image: minio/minio:latest
+    # MinIO publishes on quay.io since removing their Docker Hub images
+    image: quay.io/minio/minio:latest
     command: server /data
     environment:
       MINIO_ROOT_USER: vaultdemo
