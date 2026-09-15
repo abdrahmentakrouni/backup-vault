@@ -35,11 +35,7 @@ services:
   primary:
     # The "company server" that will be destroyed and restored during the drill.
     image: ubuntu:24.04
-    command: >
-      bash -c "apt-get update -qq &&
-               DEBIAN_FRONTEND=noninteractive apt-get install -y -qq
-               rclone mariadb-client openssl rsync curl gzip xz-utils >/dev/null &&
-               echo 'primary server ready' && sleep infinity"
+    command: ["bash", "-c", "apt-get update -qq && DEBIAN_FRONTEND=noninteractive apt-get install -y -qq rclone mariadb-client openssl rsync curl gzip xz-utils && echo 'primary server ready' && sleep infinity"]
     environment:
       DEBIAN_FRONTEND: noninteractive
     healthcheck:
