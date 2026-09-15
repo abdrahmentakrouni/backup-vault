@@ -42,6 +42,13 @@ services:
                echo 'primary server ready' && sleep infinity"
     environment:
       DEBIAN_FRONTEND: noninteractive
+    healthcheck:
+      # --wait must not release primary before its tooling is installed
+      test: ["CMD-SHELL", "command -v mysql >/dev/null && command -v rclone >/dev/null"]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+      start_period: 15s
     volumes:
       - ./:/opt/backup-vault
       - ./demo/data:/srv/data
