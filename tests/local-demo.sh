@@ -31,6 +31,7 @@ export RCLONE_CONFIG_VAULT_TYPE=s3
 export RCLONE_CONFIG_VAULT_ENDPOINT=http://minio:9000
 export RCLONE_CONFIG_VAULT_ACCESS_KEY_ID=vaultdemo
 export RCLONE_CONFIG_VAULT_SECRET_ACCESS_KEY=vaultdemo-secret
+export RCLONE_CONFIG_VAULT_PROVIDER=Minio
 
 step "before: what the company has"
 find /srv/data -maxdepth 2 -type f -printf "%10s  %p\n" | head -20
