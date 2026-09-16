@@ -1,0 +1,5 @@
+Employee handbooks and employment contracts (sample placeholders).
+
+HR-2026-001  hiring checklist
+HR-2026-002  remote work policy
+HR-2026-003  payroll calendar

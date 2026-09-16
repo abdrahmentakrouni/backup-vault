@@ -1,0 +1,55 @@
+---
+name: backup-vault demo stack
+# One company server (primary), its database, and an isolated S3 vault.
+# Everything runs locally so the disaster drill is fully reproducible.
+
+services:
+  db:
+    image: mariadb:10.11
+    environment:
+      MARIADB_ROOT_PASSWORD: rootpass-demo-only
+      MARIADB_DATABASE: appdb
+      MARIADB_USER: app
+      MARIADB_PASSWORD: apppass-demo-only
+    volumes:
+      - ./demo/init-db:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  minio:
+    image: minio/minio:latest
+    command: server /data
+    environment:
+      MINIO_ROOT_USER: vaultdemo
+      MINIO_ROOT_PASSWORD: vaultdemo-secret
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  primary:
+    # The "company server" that will be destroyed and restored during the drill.
+    image: ubuntu:24.04
+    command: >
+      bash -c "apt-get update -qq &&
+               DEBIAN_FRONTEND=noninteractive apt-get install -y -qq
+               rclone mariadb-client openssl rsync curl gzip xz-utils >/dev/null &&
+               echo 'primary server ready' && sleep infinity"
+    environment:
+      DEBIAN_FRONTEND: noninteractive
+    volumes:
+      - ./:/opt/backup-vault
+      - ./demo/data:/srv/data
+      - primary-vault:/var/backup-vault
+    depends_on:
+      db:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+
+volumes:
+  primary-vault:
