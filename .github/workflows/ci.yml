@@ -1,0 +1,53 @@
+---
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  static-analysis:
+    name: Static analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: bash -n syntax check
+        run: |
+          fail=0
+          for f in $(git ls-files '*.sh'); do
+            bash -n "$f" || fail=1
+          done
+          exit $fail
+
+      - name: ShellCheck
+        run: shellcheck $(git ls-files '*.sh')
+
+      - name: yamllint
+        run: |
+          pip install yamllint --quiet
+          yamllint .
+
+      - name: Functional smoke test (no docker)
+        run: bash tests/local-smoke.sh
+
+  disaster-recovery-simulation:
+    name: Disaster recovery simulation
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Boot the demo stack (company server + MariaDB + isolated MinIO vault)
+        run: docker compose up -d --wait
+
+      - name: Backup, tripwire, ransomware, restore - full drill
+        run: docker compose exec -T primary bash /opt/backup-vault/tests/e2e-disaster-test.sh
+
+      - name: Compose logs on failure
+        if: failure()
+        run: docker compose logs --tail 80
